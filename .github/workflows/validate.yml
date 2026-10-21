@@ -1,0 +1,39 @@
+name: Validate k6 load test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Validate k6 script
+        run: |
+          docker run --rm \
+            --env CRM_BASE_URL=https://example.crm.dynamics.com \
+            --env CRM_TENANT_ID=00000000-0000-0000-0000-000000000000 \
+            --env CRM_CLIENT_ID=00000000-0000-0000-0000-000000000000 \
+            --env CRM_CLIENT_SECRET=validation-only \
+            --volume "$PWD/k6:/scripts" \
+            grafana/k6:0.56.0 inspect /scripts/dynamics-crm.js
+
+      - name: Build container image
+        run: docker build --tag dynamics-crm-k6:validation .
+
+      - name: Validate Bicep
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az bicep install
+            az bicep build --file infra/registry/main.bicep --outfile /tmp/dynamics-crm-k6-registry.json
+            az bicep build --file infra/registry/registry.bicep --outfile /tmp/dynamics-crm-k6-registry-workload.json
+            az bicep build --file infra/main.bicep --outfile /tmp/dynamics-crm-k6-main.json
+            az bicep build --file infra/workload.bicep --outfile /tmp/dynamics-crm-k6-workload.json
