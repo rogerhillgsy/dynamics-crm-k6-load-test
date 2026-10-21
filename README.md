@@ -159,3 +159,6 @@ git push --set-upstream origin main
 ```
 
 The validation workflow needs no Azure credentials. Configure an Azure federated identity and a separate deployment workflow before automating deployments; keep the CRM client secret in a protected GitHub Environment secret or Azure Key Vault, never in repository variables or source control.
+
+
+Ymc8Q~gMifH_MwrYwVLhx8mEcOFN0QHRlIdOubqB
