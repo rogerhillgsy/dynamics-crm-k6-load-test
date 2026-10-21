@@ -23,7 +23,7 @@ if (!crmUrl || !tenantId || !clientId || !clientSecret) {
   throw new Error('Set CRM_BASE_URL, CRM_TENANT_ID, CRM_CLIENT_ID, and CRM_CLIENT_SECRET.');
 }
 
-if (lookupField !== 'email' && lookupField !== 'telephone') {
+if (lookupField !== 'emailaddress1' && lookupField !== 'msobilephone') {
   throw new Error('LOOKUP_FIELD must be either "email" or "telephone".');
 }
 
