@@ -1,0 +1,4 @@
+@baseUrl = https://an-post-dev.crm4.dynamics.com/api/data/v9.2/
+
+GET {{baseUrl}}/
+Content-Type: application/json

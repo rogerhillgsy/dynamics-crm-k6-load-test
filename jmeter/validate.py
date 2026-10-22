@@ -24,6 +24,30 @@ def validate_hash_tree(tree):
 validate_hash_tree(root.find("hashTree"))
 
 elements = list(root.iter())
+script_elements = [
+    element
+    for element in elements
+    if element.tag in {"JSR223Sampler", "JSR223PostProcessor"}
+]
+for element in script_elements:
+    script = element.findtext("stringProp[@name='script']") or ""
+    if "${__GetSecret(" in script:
+        sys.exit("Do not embed a literal GetSecret expression inside a JMeter script.")
+
+secret_arguments = [
+    element
+    for element in elements
+    if element.tag == "elementProp"
+    and element.get("name") == "CRM_CLIENT_SECRET"
+    and element.get("elementType") == "Argument"
+]
+if (
+    len(secret_arguments) != 1
+    or secret_arguments[0].findtext("stringProp[@name='Argument.value']")
+    != "${__GetSecret(dynamicsCrmClientSecret)}"
+):
+    sys.exit("CRM_CLIENT_SECRET must use the Azure Load Testing GetSecret function.")
+
 samplers = {
     element.get("testname"): element
     for element in elements

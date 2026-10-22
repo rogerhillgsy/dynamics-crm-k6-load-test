@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.5">
+    <hashTree>
+        <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Load Test for https://an-post-dev.crm4.dynamics.com/api/data/v9.2/" enabled="true">
+            <stringProp name="TestPlan.comments">Generated JMeter script for https://an-post-dev.crm4.dynamics.com/api/data/v9.2/ with configurable virtual users and duration from environment variables</stringProp>
+            <boolProp name="TestPlan.functional_mode">false</boolProp>
+            <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+            <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+            <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                    <elementProp name="HOST" elementType="Argument">
+                        <stringProp name="Argument.name">HOST</stringProp>
+                        <stringProp name="Argument.value">an-post-dev.crm4.dynamics.com</stringProp>
+                        <stringProp name="Argument.metadata">=</stringProp>
+                    </elementProp>
+                    <elementProp name="VIRTUAL_USERS" elementType="Argument">
+                        <stringProp name="Argument.name">VIRTUAL_USERS</stringProp>
+                        <stringProp name="Argument.value">${__BeanShell(System.getenv("VIRTUAL_USERS") != null ? System.getenv("VIRTUAL_USERS") : "10")}</stringProp>
+                        <stringProp name="Argument.metadata">=</stringProp>
+                    </elementProp>
+                    <elementProp name="DURATION" elementType="Argument">
+                        <stringProp name="Argument.name">DURATION</stringProp>
+                        <stringProp name="Argument.value">${__BeanShell(System.getenv("DURATION") != null ? System.getenv("DURATION") : "60")}</stringProp>
+                        <stringProp name="Argument.metadata">=</stringProp>
+                    </elementProp>
+                    <elementProp name="ENABLE_LOGGING" elementType="Argument">
+                        <stringProp name="Argument.name">ENABLE_LOGGING</stringProp>
+                        <stringProp name="Argument.value">${__BeanShell(System.getenv("ENABLE_LOGGING"))}</stringProp>
+                        <stringProp name="Argument.metadata">=</stringProp>
+                    </elementProp>
+                </collectionProp>
+            </elementProp>
+        </TestPlan>
+        <hashTree>
+            <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Main Thread Group" enabled="true">
+                <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+                <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+                    <boolProp name="LoopController.continue_forever">false</boolProp>
+                    <stringProp name="LoopController.loops">1</stringProp>
+                </elementProp>
+                <stringProp name="ThreadGroup.num_threads">${VIRTUAL_USERS}</stringProp>
+                <stringProp name="ThreadGroup.ramp_time">5</stringProp>
+                <boolProp name="ThreadGroup.scheduler">true</boolProp>
+                <stringProp name="ThreadGroup.duration">${DURATION}</stringProp>
+                <stringProp name="ThreadGroup.delay"></stringProp>
+            </ThreadGroup>
+            <hashTree>
+                <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET api/data/v9.2/" enabled="true">
+                    <stringProp name="HTTPSampler.domain">an-post-dev.crm4.dynamics.com</stringProp>
+                    <stringProp name="HTTPSampler.port"></stringProp>
+                    <stringProp name="HTTPSampler.protocol">https</stringProp>
+                    <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+                    <stringProp name="HTTPSampler.path">api/data/v9.2/</stringProp>
+                    <stringProp name="HTTPSampler.method">GET</stringProp>
+                    <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+                    <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+                    <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+                    <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+                    <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+                    <stringProp name="HTTPSampler.connect_timeout">90000</stringProp>
+                    <stringProp name="HTTPSampler.response_timeout">90000</stringProp>
+                    <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+                        <collectionProp name="Arguments.arguments"/>
+                    </elementProp>
+                </HTTPSamplerProxy>
+                <hashTree>
+                    <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+                        <collectionProp name="HeaderManager.headers">
+                            <elementProp name="" elementType="Header">
+                                <stringProp name="Header.name">Content-Type</stringProp>
+                                <stringProp name="Header.value">application/json</stringProp>
+                            </elementProp>
+                        </collectionProp>
+                    </HeaderManager>
+                    <hashTree/>
+                    <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Status Assertion" enabled="true">
+                        <collectionProp name="Asserion.test_strings">
+                            <stringProp name="49586">200</stringProp>
+                            <stringProp name="49587">201</stringProp>
+                            <stringProp name="49590">204</stringProp>
+                        </collectionProp>
+                        <stringProp name="Assertion.custom_message"></stringProp>
+                        <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+                        <boolProp name="Assertion.assume_success">false</boolProp>
+                        <intProp name="Assertion.test_type">2</intProp>
+                    </ResponseAssertion>
+                    <hashTree/>
+                    <BeanShellPostProcessor guiclass="TestBeanGUI" testclass="BeanShellPostProcessor" testname="Logging PostProcessor" enabled="true">
+                        <stringProp name="filename"></stringProp>
+                        <stringProp name="parameters"></stringProp>
+                        <boolProp name="resetInterpreter">false</boolProp>
+                        <stringProp name="script">if (System.getenv("ENABLE_LOGGING") != null &amp;&amp; System.getenv("ENABLE_LOGGING").equalsIgnoreCase("true")) {
+    log.info("Request: " + prev.getSampleLabel() + ", URL: " + prev.getURL() + ", ResponseCode: " + prev.getResponseCode());
+    
+    if (prev.getResponseCode() &lt; 200 || prev.getResponseCode() &gt;= 300) {
+        log.error("Error in request: " + prev.getSampleLabel());
+        log.error("URL: " + prev.getURL());
+        log.error("Response code: " + prev.getResponseCode());
+        log.error("Response message: " + prev.getResponseMessage());
+        log.error("Response data: " + prev.getResponseDataAsString());
+    }
+}
+</stringProp>
+                    </BeanShellPostProcessor>
+                    <hashTree/>
+                </hashTree>
+            </hashTree>
+        </hashTree>
+    </hashTree>
+</jmeterTestPlan>

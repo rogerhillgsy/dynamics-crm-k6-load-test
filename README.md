@@ -1,5 +1,13 @@
 # Dynamics CRM load testing
 
+## TLDR
+
+Use the JMeter tests with Azure Load Testing, this has produced good results.
+Pipeline can deploy infra. 
+Bring your own Keyvault for the client secret.
+
+## Overview
+
 This repository contains two implementations of the Dynamics 365 / Dataverse API scenario:
 
 - `k6/dynamics-crm.js` for the manually triggered Azure Container Apps Job.

@@ -92,7 +92,7 @@ def crmUrl = vars.get('CRM_BASE_URL')
 def tenantId = vars.get('CRM_TENANT_ID')
 def clientId = vars.get('CRM_CLIENT_ID')
 def clientSecret = vars.get('CRM_CLIENT_SECRET')
-if (!crmUrl || crmUrl == 'null' || !tenantId || !clientId || !clientSecret || clientSecret.startsWith('${__GetSecret(')) {
+if (!crmUrl || crmUrl == 'null' || !tenantId || !clientId || !clientSecret) {
     throw new IllegalArgumentException('Configure CRM_BASE_URL, CRM_TENANT_ID, CRM_CLIENT_ID, and the dynamicsCrmClientSecret Azure Load Testing secret.')
 }
 
