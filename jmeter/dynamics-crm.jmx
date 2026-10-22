@@ -242,7 +242,7 @@ vars.put('CONTACT_EMAIL_DOMAIN', emailDomain)</stringProp>
 def uniqueId = "${vars.get('TEST_RUN_ID_SAFE')}-vu${ctx.getThreadNum() + 1}-iter${iteration}"
 def phone = "${vars.get('CONTACT_TELEPHONE_PREFIX') ?: ''}${vars.get('RUN_ID_DIGITS')}${String.format('%03d', ctx.getThreadNum() + 1)}${String.format('%06d', iteration.toInteger())}"
 vars.remove('contactId')
-vars.put('testUniqueId', uniqueId)
+vars.put('testUniqueId', uniqueId[0:49])
 vars.put('contactEmail', "loadtest+${uniqueId}@${vars.get('CONTACT_EMAIL_DOMAIN')}")
 vars.put('contactPhone', phone)
 vars.put('lookupValue', vars.get('LOOKUP_FIELD') == 'email' ? vars.get('contactEmail') : phone)</stringProp>
