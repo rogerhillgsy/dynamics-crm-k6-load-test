@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Dynamics CRM load test" enabled="true">
+      <stringProp name="TestPlan.comments">Contact lookup/create followed by phone call create, wait, and update.</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="CRM_BASE_URL" elementType="Argument">
+            <stringProp name="Argument.name">CRM_BASE_URL</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CRM_BASE_URL") != null ? System.getenv("CRM_BASE_URL") : "https://example.crm.dynamics.com" )}</stringProp>
+            <stringProp name="Argument.desc">Dynamics environment URL. Set as an Azure Load Testing environment variable.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CRM_TENANT_ID" elementType="Argument">
+            <stringProp name="Argument.name">CRM_TENANT_ID</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CRM_TENANT_ID") != null ? System.getenv("CRM_TENANT_ID") : "" )}</stringProp>
+            <stringProp name="Argument.desc">Microsoft Entra tenant ID. Set as an Azure Load Testing environment variable.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CRM_CLIENT_ID" elementType="Argument">
+            <stringProp name="Argument.name">CRM_CLIENT_ID</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CRM_CLIENT_ID") != null ? System.getenv("CRM_CLIENT_ID") : "" )}</stringProp>
+            <stringProp name="Argument.desc">Application client ID. Set as an Azure Load Testing environment variable.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CRM_CLIENT_SECRET" elementType="Argument">
+            <stringProp name="Argument.name">CRM_CLIENT_SECRET</stringProp>
+            <stringProp name="Argument.value">${__GetSecret(dynamicsCrmClientSecret)}</stringProp>
+            <stringProp name="Argument.desc">Secret parameter named dynamicsCrmClientSecret in Azure Load Testing.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CRM_API_VERSION" elementType="Argument">
+            <stringProp name="Argument.name">CRM_API_VERSION</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CRM_API_VERSION") != null ? System.getenv("CRM_API_VERSION") : "v9.2" )}</stringProp>
+            <stringProp name="Argument.desc">Dataverse Web API version.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="LOOKUP_FIELD" elementType="Argument">
+            <stringProp name="Argument.name">LOOKUP_FIELD</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("LOOKUP_FIELD") != null ? System.getenv("LOOKUP_FIELD") : "email" )}</stringProp>
+            <stringProp name="Argument.desc">Contact lookup key: email or telephone.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CONTACT_EMAIL_DOMAIN" elementType="Argument">
+            <stringProp name="Argument.name">CONTACT_EMAIL_DOMAIN</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CONTACT_EMAIL_DOMAIN") != null ? System.getenv("CONTACT_EMAIL_DOMAIN") : "loadtest.example.invalid" )}</stringProp>
+            <stringProp name="Argument.desc">Domain for generated synthetic contacts.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CONTACT_TELEPHONE_PREFIX" elementType="Argument">
+            <stringProp name="Argument.name">CONTACT_TELEPHONE_PREFIX</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CONTACT_TELEPHONE_PREFIX") != null ? System.getenv("CONTACT_TELEPHONE_PREFIX") : "" )}</stringProp>
+            <stringProp name="Argument.desc">Optional numeric prefix; required when LOOKUP_FIELD is telephone.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="TEST_RUN_ID" elementType="Argument">
+            <stringProp name="Argument.name">TEST_RUN_ID</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("TEST_RUN_ID") != null ? System.getenv("TEST_RUN_ID") : (props.getProperty("TEST_RUN_ID") != null ? props.getProperty("TEST_RUN_ID") : "local-smoke-test") )}</stringProp>
+            <stringProp name="Argument.desc">Stable identifier used to make generated contact lookup keys repeatable.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="CRM_Load_Test" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">${__P(ITERATIONS,1)}</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(VUS,1)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">0</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <OnceOnlyController guiclass="OnceOnlyControllerGui" testclass="OnceOnlyController" testname="Validate configuration" enabled="true"/>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Validate configuration and prepare run ID" enabled="true">
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">import java.net.URI
+import java.util.Locale
+
+def crmUrl = vars.get('CRM_BASE_URL')
+def tenantId = vars.get('CRM_TENANT_ID')
+def clientId = vars.get('CRM_CLIENT_ID')
+def clientSecret = vars.get('CRM_CLIENT_SECRET')
+if (!crmUrl || crmUrl == 'null' || !tenantId || !clientId || !clientSecret || clientSecret.startsWith('${__GetSecret(')) {
+    throw new IllegalArgumentException('Configure CRM_BASE_URL, CRM_TENANT_ID, CRM_CLIENT_ID, and the dynamicsCrmClientSecret Azure Load Testing secret.')
+}
+
+def crmUri = new URI(crmUrl.replaceAll('/+$', ''))
+if (!(crmUri.scheme in ['http', 'https']) || !crmUri.host) {
+    throw new IllegalArgumentException('CRM_BASE_URL must be an absolute HTTP or HTTPS URL.')
+}
+vars.put('CRM_BASE_URL', crmUrl.replaceAll('/+$', ''))
+vars.put('CRM_PROTOCOL', crmUri.scheme)
+vars.put('CRM_HOST', crmUri.host)
+vars.put('CRM_PORT', crmUri.port == -1 ? '' : crmUri.port.toString())
+
+def lookupField = (vars.get('LOOKUP_FIELD') ?: 'email').toLowerCase(Locale.ROOT)
+if (!(lookupField in ['email', 'telephone'])) {
+    throw new IllegalArgumentException('LOOKUP_FIELD must be email or telephone.')
+}
+def apiVersion = vars.get('CRM_API_VERSION') ?: 'v9.2'
+if (!(apiVersion ==~ /v[0-9]+\.[0-9]+/)) {
+    throw new IllegalArgumentException('CRM_API_VERSION must use the format v9.2.')
+}
+if (props.getProperty('VUS', '1').toInteger() &lt; 1 || props.getProperty('ITERATIONS', '1').toInteger() &lt; 1) {
+    throw new IllegalArgumentException('VUS and ITERATIONS must be positive integers.')
+}
+def emailDomain = vars.get('CONTACT_EMAIL_DOMAIN')
+if (!emailDomain || !(emailDomain ==~ /[A-Za-z0-9.-]+/)) {
+    throw new IllegalArgumentException('CONTACT_EMAIL_DOMAIN must be a valid hostname.')
+}
+def telephonePrefix = vars.get('CONTACT_TELEPHONE_PREFIX') ?: ''
+if (lookupField == 'telephone' &amp;&amp; !(telephonePrefix ==~ /\+?[0-9]*/)) {
+    throw new IllegalArgumentException('CONTACT_TELEPHONE_PREFIX can contain only digits and an optional leading plus.')
+}
+if (lookupField == 'telephone' &amp;&amp; !telephonePrefix) {
+    throw new IllegalArgumentException('Set CONTACT_TELEPHONE_PREFIX when LOOKUP_FIELD is telephone.')
+}
+
+vars.put('LOOKUP_FIELD', lookupField)
+vars.put('CRM_API_VERSION', apiVersion)
+vars.put('LOOKUP_ATTRIBUTE', lookupField == 'email' ? 'emailaddress1' : 'telephone1')
+vars.put('TEST_RUN_ID_SAFE', (vars.get('TEST_RUN_ID') ?: 'local-smoke-test').replaceAll('[^A-Za-z0-9-]', '-').take(40))
+vars.put('RUN_ID_DIGITS', String.format(Locale.ROOT, '%06d', Math.abs(vars.get('TEST_RUN_ID_SAFE').hashCode() % 1000000)))
+vars.put('CONTACT_EMAIL_DOMAIN', emailDomain)</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+        </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Refresh access token when needed" enabled="true">
+            <stringProp name="IfController.condition">${__groovy(vars.get('tokenExpiresAt') == null || System.currentTimeMillis() &gt;= vars.get('tokenExpiresAt').toLong())}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Acquire Dynamics access token" enabled="true">
+              <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Token form fields" enabled="true">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="client_id" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">${CRM_CLIENT_ID}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">client_id</stringProp>
+                  </elementProp>
+                  <elementProp name="client_secret" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">${CRM_CLIENT_SECRET}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">client_secret</stringProp>
+                  </elementProp>
+                  <elementProp name="scope" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">${CRM_BASE_URL}/.default</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">scope</stringProp>
+                  </elementProp>
+                  <elementProp name="grant_type" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">client_credentials</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">grant_type</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="HTTPSampler.domain">login.microsoftonline.com</stringProp>
+              <stringProp name="HTTPSampler.port"></stringProp>
+              <stringProp name="HTTPSampler.protocol">https</stringProp>
+              <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+              <stringProp name="HTTPSampler.path">/${CRM_TENANT_ID}/oauth2/v2.0/token</stringProp>
+              <stringProp name="HTTPSampler.method">POST</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+              <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+              <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+              <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+              <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="Extract token and expiry" enabled="true">
+                <stringProp name="JSONPostProcessor.referenceNames">accessToken;tokenExpiresIn</stringProp>
+                <stringProp name="JSONPostProcessor.jsonPathExprs">$.access_token;$.expires_in</stringProp>
+                <stringProp name="JSONPostProcessor.match_numbers">1;1</stringProp>
+                <stringProp name="JSONPostProcessor.defaultValues">NOT_FOUND;NOT_FOUND</stringProp>
+                <stringProp name="JSONPostProcessor.compute_concat">false</stringProp>
+              </JSONPostProcessor>
+              <hashTree/>
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Token request must return HTTP 200" enabled="true">
+                <collectionProp name="Asserion.test_strings">
+                  <stringProp name="200">200</stringProp>
+                </collectionProp>
+                <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+                <boolProp name="Assertion.assume_success">false</boolProp>
+                <intProp name="Assertion.test_type">2</intProp>
+              </ResponseAssertion>
+              <hashTree/>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Validate token and cache expiry" enabled="true">
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="script">if (prev.getResponseCode() != '200') {
+    prev.setSuccessful(false)
+                    prev.setStopThread(true)
+                    prev.setResponseMessage('Token request failed with HTTP ' + prev.getResponseCode())
+                } else {
+    def token = vars.get('accessToken')
+    def expiresIn = vars.get('tokenExpiresIn')
+    if (!token || token == 'NOT_FOUND' || !expiresIn || expiresIn == 'NOT_FOUND') {
+        prev.setSuccessful(false)
+        prev.setStopThread(true)
+        prev.setResponseMessage('Token response did not contain access_token and expires_in')
+    } else {
+        vars.put('tokenExpiresAt', (System.currentTimeMillis() + Math.max(0L, expiresIn.toLong() - 60L) * 1000L).toString())
+    }
+}</stringProp>
+                <stringProp name="scriptLanguage">groovy</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Generate contact lookup values" enabled="true">
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">def iteration = vars.get('__jm__CRM_Load_Test__idx') ?: '0'
+def uniqueId = "${vars.get('TEST_RUN_ID_SAFE')}-vu${ctx.getThreadNum() + 1}-iter${iteration}"
+def phone = "${vars.get('CONTACT_TELEPHONE_PREFIX') ?: ''}${vars.get('RUN_ID_DIGITS')}${String.format('%03d', ctx.getThreadNum() + 1)}${String.format('%06d', iteration.toInteger())}"
+vars.remove('contactId')
+vars.put('testUniqueId', uniqueId)
+vars.put('contactEmail', "loadtest+${uniqueId}@${vars.get('CONTACT_EMAIL_DOMAIN')}")
+vars.put('contactPhone', phone)
+vars.put('lookupValue', vars.get('LOOKUP_FIELD') == 'email' ? vars.get('contactEmail') : phone)</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Lookup contact by email or telephone" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="OData query" enabled="true">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="$select" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">contactid</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">$select</stringProp>
+                </elementProp>
+                <elementProp name="$filter" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">${LOOKUP_ATTRIBUTE} eq '${lookupValue}'</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">$filter</stringProp>
+                </elementProp>
+                <elementProp name="$top" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">1</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">$top</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain">${CRM_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${CRM_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${CRM_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+            <stringProp name="HTTPSampler.path">/api/data/${CRM_API_VERSION}/contacts</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Dynamics API headers" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="Authorization" elementType="Header">
+                  <stringProp name="Header.name">Authorization</stringProp>
+                  <stringProp name="Header.value">Bearer ${accessToken}</stringProp>
+                </elementProp>
+                <elementProp name="Accept" elementType="Header">
+                  <stringProp name="Header.name">Accept</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+                <elementProp name="OData-Version" elementType="Header">
+                  <stringProp name="Header.name">OData-Version</stringProp>
+                  <stringProp name="Header.value">4.0</stringProp>
+                </elementProp>
+                <elementProp name="OData-MaxVersion" elementType="Header">
+                  <stringProp name="Header.name">OData-MaxVersion</stringProp>
+                  <stringProp name="Header.value">4.0</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="Extract matching contact ID" enabled="true">
+              <stringProp name="JSONPostProcessor.referenceNames">contactLookupId</stringProp>
+              <stringProp name="JSONPostProcessor.jsonPathExprs">$.value[0].contactid</stringProp>
+              <stringProp name="JSONPostProcessor.match_numbers">1</stringProp>
+              <stringProp name="JSONPostProcessor.defaultValues">NOT_FOUND</stringProp>
+              <stringProp name="JSONPostProcessor.compute_concat">false</stringProp>
+            </JSONPostProcessor>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contact lookup must return HTTP 200" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="200">200</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Use existing contact if found" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">def contactId = vars.get('contactLookupId')
+if (prev.getResponseCode() == '200' &amp;&amp; contactId &amp;&amp; contactId != 'NOT_FOUND') {
+    vars.put('contactId', contactId)
+} else if (prev.getResponseCode() != '200') {
+    prev.setSuccessful(false)
+    prev.setStopThread(true)
+    prev.setResponseMessage('Contact lookup failed with HTTP ' + prev.getResponseCode())
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Create contact when no match exists" enabled="true">
+            <stringProp name="IfController.condition">${__groovy(vars.get('contactId') == null)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create contact" enabled="true">
+              <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                    <stringProp name="Argument.value">{"firstname":"Load","lastname":"Test ${testUniqueId}","emailaddress1":"${contactEmail}","telephone1":"${contactPhone}"}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="HTTPSampler.domain">${CRM_HOST}</stringProp>
+              <stringProp name="HTTPSampler.port">${CRM_PORT}</stringProp>
+              <stringProp name="HTTPSampler.protocol">${CRM_PROTOCOL}</stringProp>
+              <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+              <stringProp name="HTTPSampler.path">/api/data/${CRM_API_VERSION}/contacts</stringProp>
+              <stringProp name="HTTPSampler.method">POST</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+              <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+              <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+              <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+              <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Dynamics API headers" enabled="true">
+                <collectionProp name="HeaderManager.headers">
+                  <elementProp name="Authorization" elementType="Header">
+                    <stringProp name="Header.name">Authorization</stringProp>
+                    <stringProp name="Header.value">Bearer ${accessToken}</stringProp>
+                  </elementProp>
+                  <elementProp name="Accept" elementType="Header">
+                    <stringProp name="Header.name">Accept</stringProp>
+                    <stringProp name="Header.value">application/json</stringProp>
+                  </elementProp>
+                  <elementProp name="Content-Type" elementType="Header">
+                    <stringProp name="Header.name">Content-Type</stringProp>
+                    <stringProp name="Header.value">application/json; charset=utf-8</stringProp>
+                  </elementProp>
+                  <elementProp name="OData-Version" elementType="Header">
+                    <stringProp name="Header.name">OData-Version</stringProp>
+                    <stringProp name="Header.value">4.0</stringProp>
+                  </elementProp>
+                  <elementProp name="OData-MaxVersion" elementType="Header">
+                    <stringProp name="Header.name">OData-MaxVersion</stringProp>
+                    <stringProp name="Header.value">4.0</stringProp>
+                  </elementProp>
+                  <elementProp name="Prefer" elementType="Header">
+                    <stringProp name="Header.name">Prefer</stringProp>
+                    <stringProp name="Header.value">return=representation</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </HeaderManager>
+              <hashTree/>
+              <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="Extract created contact ID from response headers" enabled="true">
+                <stringProp name="RegexExtractor.useHeaders">true</stringProp>
+                <stringProp name="RegexExtractor.refname">createdContactId</stringProp>
+                <stringProp name="RegexExtractor.regex">contacts\(([^)]+)\)</stringProp>
+                <stringProp name="RegexExtractor.template">$1$</stringProp>
+                <stringProp name="RegexExtractor.default">NOT_FOUND</stringProp>
+                <stringProp name="RegexExtractor.match_number">1</stringProp>
+                <stringProp name="Sample.scope">parent</stringProp>
+              </RegexExtractor>
+              <hashTree/>
+              <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="Extract created contact ID from response body" enabled="true">
+                <stringProp name="JSONPostProcessor.referenceNames">contactBodyId</stringProp>
+                <stringProp name="JSONPostProcessor.jsonPathExprs">$.contactid</stringProp>
+                <stringProp name="JSONPostProcessor.match_numbers">1</stringProp>
+                <stringProp name="JSONPostProcessor.defaultValues">NOT_FOUND</stringProp>
+                <stringProp name="JSONPostProcessor.compute_concat">false</stringProp>
+              </JSONPostProcessor>
+              <hashTree/>
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contact creation must succeed" enabled="true">
+                <collectionProp name="Asserion.test_strings">
+                  <stringProp name="200">200</stringProp>
+                  <stringProp name="201">201</stringProp>
+                  <stringProp name="204">204</stringProp>
+                </collectionProp>
+                <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+                <boolProp name="Assertion.assume_success">false</boolProp>
+                <intProp name="Assertion.test_type">10</intProp>
+              </ResponseAssertion>
+              <hashTree/>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Require created contact ID" enabled="true">
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="script">def contactId = vars.get('createdContactId')
+if (!contactId || contactId == 'NOT_FOUND') {
+    contactId = vars.get('contactBodyId')
+}
+if (!(prev.getResponseCode() in ['200', '201', '204']) || !contactId || contactId == 'NOT_FOUND') {
+    prev.setSuccessful(false)
+    prev.setStopThread(true)
+    prev.setResponseMessage('Contact create failed or did not return an OData-EntityId.')
+} else {
+    vars.put('contactId', contactId)
+}</stringProp>
+                <stringProp name="scriptLanguage">groovy</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create phone call associated with contact" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">{"subject":"Dynamics CRM load test phone call","description":"Created by the Dynamics CRM JMeter load test.","phonenumber":"5550100","directioncode":true,"phonecall_activity_parties":[{"participationtypemask":2,"partyid_contact@odata.bind":"/contacts(${contactId})"}]}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain">${CRM_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${CRM_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${CRM_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+            <stringProp name="HTTPSampler.path">/api/data/${CRM_API_VERSION}/phonecalls</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Dynamics API headers" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="Authorization" elementType="Header">
+                  <stringProp name="Header.name">Authorization</stringProp>
+                  <stringProp name="Header.value">Bearer ${accessToken}</stringProp>
+                </elementProp>
+                <elementProp name="Accept" elementType="Header">
+                  <stringProp name="Header.name">Accept</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+                <elementProp name="Content-Type" elementType="Header">
+                  <stringProp name="Header.name">Content-Type</stringProp>
+                  <stringProp name="Header.value">application/json; charset=utf-8</stringProp>
+                </elementProp>
+                <elementProp name="OData-Version" elementType="Header">
+                  <stringProp name="Header.name">OData-Version</stringProp>
+                  <stringProp name="Header.value">4.0</stringProp>
+                </elementProp>
+                <elementProp name="OData-MaxVersion" elementType="Header">
+                  <stringProp name="Header.name">OData-MaxVersion</stringProp>
+                  <stringProp name="Header.value">4.0</stringProp>
+                </elementProp>
+                <elementProp name="Prefer" elementType="Header">
+                  <stringProp name="Header.name">Prefer</stringProp>
+                  <stringProp name="Header.value">return=representation</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+            <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="Extract created phone call ID from response headers" enabled="true">
+              <stringProp name="RegexExtractor.useHeaders">true</stringProp>
+              <stringProp name="RegexExtractor.refname">createdPhonecallId</stringProp>
+              <stringProp name="RegexExtractor.regex">phonecalls\(([^)]+)\)</stringProp>
+              <stringProp name="RegexExtractor.template">$1$</stringProp>
+              <stringProp name="RegexExtractor.default">NOT_FOUND</stringProp>
+              <stringProp name="RegexExtractor.match_number">1</stringProp>
+              <stringProp name="Sample.scope">parent</stringProp>
+            </RegexExtractor>
+            <hashTree/>
+            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="Extract created phone call ID from response body" enabled="true">
+              <stringProp name="JSONPostProcessor.referenceNames">phonecallBodyId</stringProp>
+              <stringProp name="JSONPostProcessor.jsonPathExprs">$.activityid</stringProp>
+              <stringProp name="JSONPostProcessor.match_numbers">1</stringProp>
+              <stringProp name="JSONPostProcessor.defaultValues">NOT_FOUND</stringProp>
+              <stringProp name="JSONPostProcessor.compute_concat">false</stringProp>
+            </JSONPostProcessor>
+            <hashTree/>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Phone call creation must succeed" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="200">200</stringProp>
+                <stringProp name="201">201</stringProp>
+                <stringProp name="204">204</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">10</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Require created phone call ID" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">def phonecallId = vars.get('createdPhonecallId')
+if (!phonecallId || phonecallId == 'NOT_FOUND') {
+    phonecallId = vars.get('phonecallBodyId')
+}
+if (!(prev.getResponseCode() in ['200', '201', '204']) || !phonecallId || phonecallId == 'NOT_FOUND') {
+    prev.setSuccessful(false)
+    prev.setStopThread(true)
+    prev.setResponseMessage('Phone call create failed or did not return an OData-EntityId.')
+} else {
+    vars.put('phonecallId', phonecallId)
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+          <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Wait and update phone call" enabled="true"/>
+          <hashTree>
+            <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Wait 60 to 120 seconds" enabled="true">
+              <stringProp name="ConstantTimer.delay">60000</stringProp>
+              <stringProp name="RandomTimer.range">60000</stringProp>
+            </UniformRandomTimer>
+            <hashTree/>
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Update phone call after wait" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">{"subject":"Dynamics CRM load test phone call - updated","description":"Updated by the Dynamics CRM JMeter load test."}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain">${CRM_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${CRM_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${CRM_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+            <stringProp name="HTTPSampler.path">/api/data/${CRM_API_VERSION}/phonecalls(${phonecallId})</stringProp>
+            <stringProp name="HTTPSampler.method">PATCH</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Dynamics API headers" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="Authorization" elementType="Header">
+                  <stringProp name="Header.name">Authorization</stringProp>
+                  <stringProp name="Header.value">Bearer ${accessToken}</stringProp>
+                </elementProp>
+                <elementProp name="Accept" elementType="Header">
+                  <stringProp name="Header.name">Accept</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+                <elementProp name="Content-Type" elementType="Header">
+                  <stringProp name="Header.name">Content-Type</stringProp>
+                  <stringProp name="Header.value">application/json; charset=utf-8</stringProp>
+                </elementProp>
+                <elementProp name="OData-Version" elementType="Header">
+                  <stringProp name="Header.name">OData-Version</stringProp>
+                  <stringProp name="Header.value">4.0</stringProp>
+                </elementProp>
+                <elementProp name="OData-MaxVersion" elementType="Header">
+                  <stringProp name="Header.name">OData-MaxVersion</stringProp>
+                  <stringProp name="Header.value">4.0</stringProp>
+                </elementProp>
+              <elementProp name="Prefer" elementType="Header">
+                  <stringProp name="Header.name">Prefer</stringProp>
+                  <stringProp name="Header.value">return=representation</stringProp>
+                </elementProp>
+              </collectionProp>
+              </HeaderManager>
+              <hashTree/>
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Phone call update must return HTTP 200 or 204" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="200">200</stringProp>
+                <stringProp name="204">204</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">10</intProp>
+              </ResponseAssertion>
+              <hashTree/>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Stop thread if phone call update fails" enabled="true">
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="script">if (!(prev.getResponseCode() in ['200', '204'])) {
+    prev.setSuccessful(false)
+    prev.setStopThread(true)
+    prev.setResponseMessage('Phone call update failed with HTTP ' + prev.getResponseCode())
+}</stringProp>
+                <stringProp name="scriptLanguage">groovy</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+        </hashTree>
+      </hashTree>
+    </hashTree>
+</jmeterTestPlan>

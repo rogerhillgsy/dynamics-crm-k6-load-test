@@ -28,6 +28,9 @@ jobs:
       - name: Build container image
         run: docker build --tag dynamics-crm-k6:validation .
 
+      - name: Validate JMeter test plan
+        run: python jmeter/validate.py
+
       - name: Validate Bicep
         uses: azure/cli@v2
         with:
