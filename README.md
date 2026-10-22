@@ -35,7 +35,8 @@ Keep load testing within an authorized environment and Dynamics service-protecti
 
 1. In the Azure portal, open the Azure Load Testing resource and create a test by uploading [`jmeter/dynamics-crm.jmx`](./jmeter/dynamics-crm.jmx).
 2. Upload [`jmeter/user.properties`](./jmeter/user.properties) as the JMeter user properties file. Set `VUS` and `ITERATIONS` to the intended virtual-user count and iterations per user. Each iteration includes a 60-120 second wait; allow enough test duration for all iterations to finish.
-3. In the test's **Parameters** configuration, add these non-secret environment variables:
+3. Prepare and upload `existing-contacts.csv` alongside the JMX file. Use [`jmeter/existing-contacts.example.csv`](./jmeter/existing-contacts.example.csv) as a template, replacing the placeholder values with existing test contacts in your Dynamics environment. Keep its header row and column order (`email,telephone`); provide the selected lookup field for every contact.
+4. In the test's **Parameters** configuration, add these non-secret environment variables:
 
    | Name | Example | Notes |
    | --- | --- | --- |
@@ -44,16 +45,17 @@ Keep load testing within an authorized environment and Dynamics service-protecti
    | `CRM_CLIENT_ID` | `00000000-0000-0000-0000-000000000000` | Application client ID. |
    | `LOOKUP_FIELD` | `email` | `email` or `telephone`. |
    | `CONTACT_EMAIL_DOMAIN` | `loadtest.example.invalid` | Synthetic contact email domain. Use a domain accepted by your environment. |
+   | `CONTACT_LOOKUP_HIT_PERCENT` | `90` | Defaults to 90. Set from 0 to 100 to adjust the percentage of lookups using existing CSV contacts. |
    | `CONTACT_TELEPHONE_PREFIX` | `+1555` | Required for telephone lookup; use test numbers only. |
    | `CRM_API_VERSION` | `v9.2` | Optional; defaults to `v9.2`. |
    | `TEST_RUN_ID` | `smoke-2026-10` | Optional; use a new value to generate a distinct set of contact identities. |
 
    Set `LOOKUP_FIELD=telephone` and provide `CONTACT_TELEPHONE_PREFIX` to look up contacts by telephone. For email lookup, the plan uses a unique email address in the configured domain.
 
-4. Add a load-test secret named **`dynamicsCrmClientSecret`**. Prefer an Azure Key Vault secret reference and grant the Azure Load Testing resource's managed identity permission to read it. The JMeter plan reads it with Azure Load Testing's `__GetSecret` function; do not put credentials in the JMX file, `user.properties`, or environment-variable values.
-5. Choose the load pattern and test duration in Azure Load Testing, then run the test. Review request failures and response-time metrics for the individual lookup, create, and update samplers.
+5. Add a load-test secret named **`dynamicsCrmClientSecret`**. Prefer an Azure Key Vault secret reference and grant the Azure Load Testing resource's managed identity permission to read it. The JMeter plan reads it with Azure Load Testing's `__GetSecret` function; do not put credentials in the JMX file, `user.properties`, or environment-variable values.
+6. Choose the load pattern and test duration in Azure Load Testing, then run the test. Review request failures and response-time metrics for the individual lookup, create, and update samplers.
 
-`VUS` and `ITERATIONS` are JMeter properties, set in the uploaded user properties file. Environment values control the Dynamics endpoint and scenario behavior; the CRM client secret is passed separately as a load-test secret.
+`VUS`, `ITERATIONS`, `TEST_RUN_ID`, and `CONTACT_LOOKUP_HIT_PERCENT` are JMeter properties, set in the uploaded user properties file. The hit percentage can instead be overridden by an Azure Load Testing environment variable with the same name. Each iteration makes an independent random choice: 90% use a row from `existing-contacts.csv`, and the remaining 10% use a unique generated lookup value to exercise contact creation. Thus the observed ratio approaches 90% over a large number of iterations; small samples can vary. Environment values control the Dynamics endpoint and scenario behavior; the CRM client secret is passed separately as a load-test secret.
 
 ## Local checks
 

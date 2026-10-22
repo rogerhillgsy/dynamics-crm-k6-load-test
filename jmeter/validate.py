@@ -33,6 +33,13 @@ for element in script_elements:
     script = element.findtext("stringProp[@name='script']") or ""
     if "${__GetSecret(" in script:
         sys.exit("Do not embed a literal GetSecret expression inside a JMeter script.")
+    if element.get("testname") == "Generate contact lookup values":
+        if (
+            "CONTACT_LOOKUP_HIT_PERCENT" not in script
+            or "EXISTING_CONTACT_EMAIL" not in script
+            or "EXISTING_CONTACT_TELEPHONE" not in script
+        ):
+            sys.exit("Contact lookups must choose between the CSV pool and unique miss values.")
 
 secret_arguments = [
     element
@@ -66,6 +73,8 @@ for name, method in required_samplers.items():
         sys.exit(f"Missing or incorrect HTTP sampler: {name} ({method}).")
 
 thread_group = next(element for element in elements if element.tag == "ThreadGroup")
+if thread_group.findtext("stringProp[@name='ThreadGroup.on_sample_error']") != "stopthread":
+    sys.exit("Failed requests must stop their virtual-user thread.")
 if thread_group.findtext(
     "elementProp[@name='ThreadGroup.main_controller']/stringProp[@name='LoopController.loops']"
 ) != "${__P(ITERATIONS,1)}":
@@ -117,5 +126,49 @@ if timer.findtext("stringProp[@name='ConstantTimer.delay']") != "60000":
     sys.exit("Wait timer must have a 60-second base delay.")
 if timer.findtext("stringProp[@name='RandomTimer.range']") != "60000":
     sys.exit("Wait timer must add up to 60 seconds of random delay.")
+
+csv_data_sets = [
+    element for element in elements if element.tag == "CSVDataSet"
+]
+if len(csv_data_sets) != 1:
+    sys.exit("Expected one CSV contact lookup pool.")
+csv = csv_data_sets[0]
+if (
+    csv.findtext("stringProp[@name='filename']") != "existing-contacts.csv"
+    or csv.findtext("stringProp[@name='variableNames']")
+    != "EXISTING_CONTACT_EMAIL,EXISTING_CONTACT_TELEPHONE"
+    or csv.findtext("boolProp[@name='ignoreFirstLine']") != "true"
+    or csv.findtext("boolProp[@name='recycle']") != "true"
+):
+    sys.exit("CSV contact pool must provide email and telephone columns and recycle rows.")
+hit_percent = next(
+    (
+        element
+        for element in elements
+        if element.tag == "elementProp"
+        and element.get("name") == "CONTACT_LOOKUP_HIT_PERCENT"
+        and element.get("elementType") == "Argument"
+    ),
+    None,
+)
+if (
+    hit_percent is None
+    or "props.getProperty(\"CONTACT_LOOKUP_HIT_PERCENT\", \"90\")"
+    not in hit_percent.findtext("stringProp[@name='Argument.value']", "")
+):
+    sys.exit("Existing-contact hit rate must default to 90 percent and support configuration.")
+lookup_script = next(
+    (
+        element.findtext("stringProp[@name='script']", "")
+        for element in script_elements
+        if element.get("testname") == "Generate contact lookup values"
+    ),
+    "",
+)
+if "nextInt(100)" not in lookup_script or " < " not in lookup_script:
+    sys.exit("Existing-contact selection must use the configured per-iteration percentage.")
+example_csv = plan_path.with_name("existing-contacts.example.csv")
+if not example_csv.is_file() or len(example_csv.read_text(encoding="utf-8").splitlines()) < 2:
+    sys.exit("Include an existing-contacts CSV example with at least one contact row.")
 
 print("JMeter test plan XML and required CRM load-test steps are valid.")

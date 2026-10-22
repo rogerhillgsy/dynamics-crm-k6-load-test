@@ -49,6 +49,12 @@
             <stringProp name="Argument.desc">Domain for generated synthetic contacts.</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
+          <elementProp name="CONTACT_LOOKUP_HIT_PERCENT" elementType="Argument">
+            <stringProp name="Argument.name">CONTACT_LOOKUP_HIT_PERCENT</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CONTACT_LOOKUP_HIT_PERCENT") != null ? System.getenv("CONTACT_LOOKUP_HIT_PERCENT") : props.getProperty("CONTACT_LOOKUP_HIT_PERCENT", "90") )}</stringProp>
+            <stringProp name="Argument.desc">Percentage of lookups that use an existing contact from existing-contacts.csv.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
           <elementProp name="CONTACT_TELEPHONE_PREFIX" elementType="Argument">
             <stringProp name="Argument.name">CONTACT_TELEPHONE_PREFIX</stringProp>
             <stringProp name="Argument.value">${__BeanShell( System.getenv("CONTACT_TELEPHONE_PREFIX") != null ? System.getenv("CONTACT_TELEPHONE_PREFIX") : "" )}</stringProp>
@@ -66,7 +72,7 @@
     </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="CRM_Load_Test" enabled="true">
-        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <stringProp name="ThreadGroup.on_sample_error">stopthread</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
           <stringProp name="LoopController.loops">${__P(ITERATIONS,1)}</stringProp>
@@ -79,6 +85,18 @@
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
       </ThreadGroup>
       <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Existing contact lookup pool" enabled="true">
+          <stringProp name="filename">existing-contacts.csv</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="variableNames">EXISTING_CONTACT_EMAIL,EXISTING_CONTACT_TELEPHONE</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <stringProp name="delimiter">,</stringProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="shareMode">shareMode.all</stringProp>
+        </CSVDataSet>
+        <hashTree/>
         <OnceOnlyController guiclass="OnceOnlyControllerGui" testclass="OnceOnlyController" testname="Validate configuration" enabled="true"/>
         <hashTree>
           <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Validate configuration and prepare run ID" enabled="true">
@@ -113,6 +131,15 @@ def apiVersion = vars.get('CRM_API_VERSION') ?: 'v9.2'
 if (!(apiVersion ==~ /v[0-9]+\.[0-9]+/)) {
     throw new IllegalArgumentException('CRM_API_VERSION must use the format v9.2.')
 }
+def hitPercent
+try {
+    hitPercent = Integer.parseInt(vars.get('CONTACT_LOOKUP_HIT_PERCENT') ?: '90')
+} catch (NumberFormatException exception) {
+    throw new IllegalArgumentException('CONTACT_LOOKUP_HIT_PERCENT must be an integer from 0 to 100.')
+}
+if (hitPercent &lt; 0 || hitPercent &gt; 100) {
+    throw new IllegalArgumentException('CONTACT_LOOKUP_HIT_PERCENT must be between 0 and 100.')
+}
 if (props.getProperty('VUS', '1').toInteger() &lt; 1 || props.getProperty('ITERATIONS', '1').toInteger() &lt; 1) {
     throw new IllegalArgumentException('VUS and ITERATIONS must be positive integers.')
 }
@@ -130,6 +157,7 @@ if (lookupField == 'telephone' &amp;&amp; !telephonePrefix) {
 
 vars.put('LOOKUP_FIELD', lookupField)
 vars.put('CRM_API_VERSION', apiVersion)
+vars.put('CONTACT_LOOKUP_HIT_PERCENT', hitPercent.toString())
 vars.put('LOOKUP_ATTRIBUTE', lookupField == 'email' ? 'emailaddress1' : 'telephone1')
 vars.put('TEST_RUN_ID_SAFE', (vars.get('TEST_RUN_ID') ?: 'local-smoke-test').replaceAll('[^A-Za-z0-9-]', '-').take(40))
 vars.put('RUN_ID_DIGITS', String.format(Locale.ROOT, '%06d', Math.abs(vars.get('TEST_RUN_ID_SAFE').hashCode() % 1000000)))
@@ -241,11 +269,17 @@ vars.put('CONTACT_EMAIL_DOMAIN', emailDomain)</stringProp>
             <stringProp name="script">def iteration = vars.get('__jm__CRM_Load_Test__idx') ?: '0'
 def uniqueId = "${vars.get('TEST_RUN_ID_SAFE')}-vu${ctx.getThreadNum() + 1}-iter${iteration}"
 def phone = "${vars.get('CONTACT_TELEPHONE_PREFIX') ?: ''}${vars.get('RUN_ID_DIGITS')}${String.format('%03d', ctx.getThreadNum() + 1)}${String.format('%06d', iteration.toInteger())}"
-vars.remove('contactId')
-vars.put('testUniqueId', uniqueId[0:49])
-vars.put('contactEmail', "loadtest+${uniqueId}@${vars.get('CONTACT_EMAIL_DOMAIN')}")
-vars.put('contactPhone', phone)
-vars.put('lookupValue', vars.get('LOOKUP_FIELD') == 'email' ? vars.get('contactEmail') : phone)</stringProp>
+            def useExistingContact = java.util.concurrent.ThreadLocalRandom.current().nextInt(100) &lt; vars.get('CONTACT_LOOKUP_HIT_PERCENT').toInteger()
+            def existingValue = vars.get(vars.get('LOOKUP_FIELD') == 'email' ? 'EXISTING_CONTACT_EMAIL' : 'EXISTING_CONTACT_TELEPHONE')
+            if (useExistingContact &amp;&amp; (!existingValue || existingValue.trim().isEmpty())) {
+                throw new IllegalArgumentException("The existing contact CSV does not contain a ${vars.get('LOOKUP_FIELD')} value for this row.")
+            }
+            vars.remove('contactId')
+            vars.put('testUniqueId', uniqueId[0:49])
+            vars.put('contactEmail', "loadtest+${uniqueId}@${vars.get('CONTACT_EMAIL_DOMAIN')}")
+            vars.put('contactPhone', phone)
+            vars.put('useExistingContact', Boolean.toString(useExistingContact))
+            vars.put('lookupValue', useExistingContact ? existingValue.trim() : (vars.get('LOOKUP_FIELD') == 'email' ? vars.get('contactEmail') : phone))</stringProp>
             <stringProp name="scriptLanguage">groovy</stringProp>
           </JSR223Sampler>
           <hashTree/>
