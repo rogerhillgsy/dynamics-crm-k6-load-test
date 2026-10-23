@@ -603,9 +603,9 @@ if (!(prev.getResponseCode() in ['200', '201', '204']) || !phonecallId || phonec
           </hashTree>
           <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Wait and update phone call" enabled="true"/>
           <hashTree>
-            <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Wait 60 to 120 seconds" enabled="true">
-              <stringProp name="ConstantTimer.delay">60000</stringProp>
-              <stringProp name="RandomTimer.range">60000</stringProp>
+            <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Wait 6 to 1s0 seconds" enabled="true">
+              <stringProp name="ConstantTimer.delay">6000</stringProp>
+              <stringProp name="RandomTimer.range">4000</stringProp>
             </UniformRandomTimer>
             <hashTree/>
             <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Update phone call after wait" enabled="true">
