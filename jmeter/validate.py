@@ -74,6 +74,39 @@ for name, method in required_samplers.items():
     if sampler is None or sampler.findtext("stringProp[@name='HTTPSampler.method']") != method:
         sys.exit(f"Missing or incorrect HTTP sampler: {name} ({method}).")
 
+phonecall_body = samplers["Create phone call associated with contact"].findtext(
+    "elementProp[@name='HTTPsampler.Arguments']/collectionProp/elementProp/stringProp[@name='Argument.value']",
+    "",
+)
+required_phonecall_fields = (
+    '"subject":"Interaction for API Unit Test 1"',
+    '"directioncode":false',
+    '"regardingobjectid_contact_phonecall@odata.bind":"/contacts(${contactId})"',
+    '"ownerid_phonecall@odata.bind":"/teams(${CRM_TEAM_ID})"',
+    '"partyid_systemuser@odata.bind":"/systemusers(${CRM_USER_ID})"',
+    '"participationtypemask":2',
+    '"partyid_contact@odata.bind":"/contacts(${contactId})"',
+    '"participationtypemask":1',
+)
+if any(field not in phonecall_body for field in required_phonecall_fields):
+    sys.exit("Phone call create payload is missing a required owner, regarding, or activity party field.")
+
+for variable in ("CRM_TEAM_ID", "CRM_USER_ID"):
+    argument = next(
+        (
+            element
+            for element in elements
+            if element.tag == "elementProp"
+            and element.get("name") == variable
+            and element.get("elementType") == "Argument"
+        ),
+        None,
+    )
+    if argument is None or f'System.getenv("{variable}")' not in argument.findtext(
+        "stringProp[@name='Argument.value']", ""
+    ):
+        sys.exit(f"{variable} must be configurable through an environment variable.")
+
 thread_group = next(element for element in elements if element.tag == "ThreadGroup")
 if thread_group.findtext("stringProp[@name='ThreadGroup.on_sample_error']") != "stopthread":
     sys.exit("Failed requests must stop their virtual-user thread.")

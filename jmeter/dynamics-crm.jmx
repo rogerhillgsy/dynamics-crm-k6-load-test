@@ -25,6 +25,18 @@
             <stringProp name="Argument.desc">Application client ID. Set as an Azure Load Testing environment variable.</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
+          <elementProp name="CRM_TEAM_ID" elementType="Argument">
+            <stringProp name="Argument.name">CRM_TEAM_ID</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CRM_TEAM_ID") != null ? System.getenv("CRM_TEAM_ID") : "" )}</stringProp>
+            <stringProp name="Argument.desc">Dataverse team ID used as the phone call owner.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="CRM_USER_ID" elementType="Argument">
+            <stringProp name="Argument.name">CRM_USER_ID</stringProp>
+            <stringProp name="Argument.value">${__BeanShell( System.getenv("CRM_USER_ID") != null ? System.getenv("CRM_USER_ID") : "" )}</stringProp>
+            <stringProp name="Argument.desc">Dataverse system user ID used as the phone call caller.</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
           <elementProp name="CRM_CLIENT_SECRET" elementType="Argument">
             <stringProp name="Argument.name">CRM_CLIENT_SECRET</stringProp>
             <stringProp name="Argument.value">${__GetSecret(dynamicsCrmClientSecret)}</stringProp>
@@ -103,9 +115,15 @@ import java.util.Locale
 def crmUrl = vars.get('CRM_BASE_URL')
 def tenantId = vars.get('CRM_TENANT_ID')
 def clientId = vars.get('CRM_CLIENT_ID')
+def teamId = vars.get('CRM_TEAM_ID')
+def userId = vars.get('CRM_USER_ID')
 def clientSecret = vars.get('CRM_CLIENT_SECRET')
-if (!crmUrl || crmUrl == 'null' || !tenantId || !clientId || !clientSecret) {
-    throw new IllegalArgumentException('Configure CRM_BASE_URL, CRM_TENANT_ID, CRM_CLIENT_ID, and the dynamicsCrmClientSecret Azure Load Testing secret.')
+if (!crmUrl || crmUrl == 'null' || !tenantId || !clientId || !teamId || !userId || !clientSecret) {
+    throw new IllegalArgumentException('Configure CRM_BASE_URL, CRM_TENANT_ID, CRM_CLIENT_ID, CRM_TEAM_ID, CRM_USER_ID, and the dynamicsCrmClientSecret Azure Load Testing secret.')
+}
+def guidPattern = /(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+if (!(teamId ==~ guidPattern) || !(userId ==~ guidPattern)) {
+    throw new IllegalArgumentException('CRM_TEAM_ID and CRM_USER_ID must be valid GUIDs.')
 }
 
 def crmUri = new URI(crmUrl.replaceAll('/+$', ''))
@@ -488,7 +506,7 @@ if (!(prev.getResponseCode() in ['200', '201', '204']) || !contactId || contactI
               <collectionProp name="Arguments.arguments">
                 <elementProp name="" elementType="HTTPArgument">
                   <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                  <stringProp name="Argument.value">{"subject":"Dynamics CRM load test phone call","description":"Created by the Dynamics CRM JMeter load test.","phonenumber":"5550100","directioncode":true,"phonecall_activity_parties":[{"participationtypemask":2,"partyid_contact@odata.bind":"/contacts(${contactId})"}]}</stringProp>
+                  <stringProp name="Argument.value">{"subject":"Interaction for API Unit Test 1","directioncode":false,"regardingobjectid_contact_phonecall@odata.bind":"/contacts(${contactId})","ownerid_phonecall@odata.bind":"/teams(${CRM_TEAM_ID})","phonecall_activity_parties":[{"partyid_systemuser@odata.bind":"/systemusers(${CRM_USER_ID})","participationtypemask":2},{"partyid_contact@odata.bind":"/contacts(${contactId})","participationtypemask":1}]}</stringProp>
                   <stringProp name="Argument.metadata">=</stringProp>
                 </elementProp>
               </collectionProp>

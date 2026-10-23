@@ -43,6 +43,8 @@ Keep load testing within an authorized environment and Dynamics service-protecti
    | `CRM_BASE_URL` | `https://example.crm.dynamics.com` | Dynamics environment URL, without a trailing slash. |
    | `CRM_TENANT_ID` | `00000000-0000-0000-0000-000000000000` | Microsoft Entra tenant ID. |
    | `CRM_CLIENT_ID` | `00000000-0000-0000-0000-000000000000` | Application client ID. |
+   | `CRM_TEAM_ID` | `00000000-0000-0000-0000-000000000000` | Dataverse team that owns the created phone call. |
+   | `CRM_USER_ID` | `00000000-0000-0000-0000-000000000000` | Dataverse system user added as the phone call caller. |
    | `LOOKUP_FIELD` | `email` | `email` or `telephone`. |
    | `CONTACT_EMAIL_DOMAIN` | `loadtest.example.invalid` | Synthetic contact email domain. Use a domain accepted by your environment. |
    | `CONTACT_LOOKUP_HIT_PERCENT` | `90` | Defaults to 90. Set from 0 to 100 to adjust the percentage of lookups using existing CSV contacts. |
