@@ -40,6 +40,8 @@ for element in script_elements:
             or "EXISTING_CONTACT_TELEPHONE" not in script
         ):
             sys.exit("Contact lookups must choose between the CSV pool and unique miss values.")
+        if "vars.put('testUniqueId', uniqueId.take(" not in script:
+            sys.exit("Generated contact names must use Groovy take() rather than invalid slice syntax.")
 
 secret_arguments = [
     element
@@ -141,22 +143,19 @@ if (
     or csv.findtext("boolProp[@name='recycle']") != "true"
 ):
     sys.exit("CSV contact pool must provide email and telephone columns and recycle rows.")
-hit_percent = next(
+configuration_script = next(
     (
-        element
-        for element in elements
-        if element.tag == "elementProp"
-        and element.get("name") == "CONTACT_LOOKUP_HIT_PERCENT"
-        and element.get("elementType") == "Argument"
+        element.findtext("stringProp[@name='script']", "")
+        for element in script_elements
+        if element.get("testname") == "Validate configuration and prepare run ID"
     ),
-    None,
+    "",
 )
 if (
-    hit_percent is None
-    or "props.getProperty(\"CONTACT_LOOKUP_HIT_PERCENT\", \"90\")"
-    not in hit_percent.findtext("stringProp[@name='Argument.value']", "")
+    "System.getenv('CONTACT_LOOKUP_HIT_PERCENT')" not in configuration_script
+    or "props.getProperty('CONTACT_LOOKUP_HIT_PERCENT', '90')" not in configuration_script
 ):
-    sys.exit("Existing-contact hit rate must default to 90 percent and support configuration.")
+    sys.exit("Existing-contact hit rate must support environment overrides and default to 90 percent.")
 lookup_script = next(
     (
         element.findtext("stringProp[@name='script']", "")

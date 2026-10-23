@@ -49,12 +49,6 @@
             <stringProp name="Argument.desc">Domain for generated synthetic contacts.</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="CONTACT_LOOKUP_HIT_PERCENT" elementType="Argument">
-            <stringProp name="Argument.name">CONTACT_LOOKUP_HIT_PERCENT</stringProp>
-            <stringProp name="Argument.value">${__BeanShell( System.getenv("CONTACT_LOOKUP_HIT_PERCENT") != null ? System.getenv("CONTACT_LOOKUP_HIT_PERCENT") : props.getProperty("CONTACT_LOOKUP_HIT_PERCENT", "90") )}</stringProp>
-            <stringProp name="Argument.desc">Percentage of lookups that use an existing contact from existing-contacts.csv.</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
           <elementProp name="CONTACT_TELEPHONE_PREFIX" elementType="Argument">
             <stringProp name="Argument.name">CONTACT_TELEPHONE_PREFIX</stringProp>
             <stringProp name="Argument.value">${__BeanShell( System.getenv("CONTACT_TELEPHONE_PREFIX") != null ? System.getenv("CONTACT_TELEPHONE_PREFIX") : "" )}</stringProp>
@@ -133,7 +127,8 @@ if (!(apiVersion ==~ /v[0-9]+\.[0-9]+/)) {
 }
 def hitPercent
 try {
-    hitPercent = Integer.parseInt(vars.get('CONTACT_LOOKUP_HIT_PERCENT') ?: '90')
+    def configuredHitPercent = System.getenv('CONTACT_LOOKUP_HIT_PERCENT') ?: props.getProperty('CONTACT_LOOKUP_HIT_PERCENT', '90')
+    hitPercent = Integer.parseInt(configuredHitPercent)
 } catch (NumberFormatException exception) {
     throw new IllegalArgumentException('CONTACT_LOOKUP_HIT_PERCENT must be an integer from 0 to 100.')
 }
@@ -275,9 +270,9 @@ def phone = "${vars.get('CONTACT_TELEPHONE_PREFIX') ?: ''}${vars.get('RUN_ID_DIG
                 throw new IllegalArgumentException("The existing contact CSV does not contain a ${vars.get('LOOKUP_FIELD')} value for this row.")
             }
             vars.remove('contactId')
-            vars.put('testUniqueId', uniqueId[0:49])
+            vars.put('testUniqueId', uniqueId.take(30))
             vars.put('contactEmail', "loadtest+${uniqueId}@${vars.get('CONTACT_EMAIL_DOMAIN')}")
-            vars.put('contactPhone', phone)
+            vars.put('contactPhone', phone.take(14))
             vars.put('useExistingContact', Boolean.toString(useExistingContact))
             vars.put('lookupValue', useExistingContact ? existingValue.trim() : (vars.get('LOOKUP_FIELD') == 'email' ? vars.get('contactEmail') : phone))</stringProp>
             <stringProp name="scriptLanguage">groovy</stringProp>
