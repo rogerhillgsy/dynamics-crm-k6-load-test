@@ -226,11 +226,11 @@ vars.put('CONTACT_EMAIL_DOMAIN', emailDomain)</stringProp>
               <hashTree/>
               <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Token request must return HTTP 200" enabled="true">
                 <collectionProp name="Asserion.test_strings">
-                  <stringProp name="200">200</stringProp>
+                  <stringProp name="status">200</stringProp>
                 </collectionProp>
                 <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
                 <boolProp name="Assertion.assume_success">false</boolProp>
-                <intProp name="Assertion.test_type">2</intProp>
+                <intProp name="Assertion.test_type">8</intProp>
               </ResponseAssertion>
               <hashTree/>
               <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Validate token and cache expiry" enabled="true">
@@ -351,11 +351,11 @@ def phone = "${vars.get('CONTACT_TELEPHONE_PREFIX') ?: ''}${vars.get('RUN_ID_DIG
             <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contact lookup must return HTTP 200" enabled="true">
               <collectionProp name="Asserion.test_strings">
-                <stringProp name="200">200</stringProp>
+                <stringProp name="status">200</stringProp>
               </collectionProp>
               <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
               <boolProp name="Assertion.assume_success">false</boolProp>
-              <intProp name="Assertion.test_type">2</intProp>
+              <intProp name="Assertion.test_type">8</intProp>
             </ResponseAssertion>
             <hashTree/>
             <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Use existing contact if found" enabled="true">
@@ -455,13 +455,11 @@ if (prev.getResponseCode() == '200' &amp;&amp; contactId &amp;&amp; contactId !=
               <hashTree/>
               <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contact creation must succeed" enabled="true">
                 <collectionProp name="Asserion.test_strings">
-                  <stringProp name="200">200</stringProp>
-                  <stringProp name="201">201</stringProp>
-                  <stringProp name="204">204</stringProp>
+                  <stringProp name="status">200|201|204</stringProp>
                 </collectionProp>
                 <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
                 <boolProp name="Assertion.assume_success">false</boolProp>
-                <intProp name="Assertion.test_type">10</intProp>
+                <intProp name="Assertion.test_type">33</intProp>
               </ResponseAssertion>
               <hashTree/>
               <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Require created contact ID" enabled="true">
@@ -559,13 +557,11 @@ if (!(prev.getResponseCode() in ['200', '201', '204']) || !contactId || contactI
             <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Phone call creation must succeed" enabled="true">
               <collectionProp name="Asserion.test_strings">
-                <stringProp name="200">200</stringProp>
-                <stringProp name="201">201</stringProp>
-                <stringProp name="204">204</stringProp>
+                <stringProp name="status">200|201|204</stringProp>
               </collectionProp>
               <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
               <boolProp name="Assertion.assume_success">false</boolProp>
-              <intProp name="Assertion.test_type">10</intProp>
+              <intProp name="Assertion.test_type">33</intProp>
             </ResponseAssertion>
             <hashTree/>
             <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Require created phone call ID" enabled="true">
@@ -651,12 +647,11 @@ if (!(prev.getResponseCode() in ['200', '201', '204']) || !phonecallId || phonec
               <hashTree/>
               <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Phone call update must return HTTP 200 or 204" enabled="true">
               <collectionProp name="Asserion.test_strings">
-                <stringProp name="200">200</stringProp>
-                <stringProp name="204">204</stringProp>
+                <stringProp name="status">200|204</stringProp>
               </collectionProp>
               <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
               <boolProp name="Assertion.assume_success">false</boolProp>
-              <intProp name="Assertion.test_type">10</intProp>
+              <intProp name="Assertion.test_type">33</intProp>
               </ResponseAssertion>
               <hashTree/>
               <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Stop thread if phone call update fails" enabled="true">

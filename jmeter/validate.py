@@ -90,6 +90,25 @@ assertions = [
 if len(assertions) != 5:
     sys.exit("Expected response assertions for the token and all four CRM requests.")
 
+expected_status_assertions = {
+    "Token request must return HTTP 200": ("200", "8"),
+    "Contact lookup must return HTTP 200": ("200", "8"),
+    "Contact creation must succeed": ("200|201|204", "33"),
+    "Phone call creation must succeed": ("200|201|204", "33"),
+    "Phone call update must return HTTP 200 or 204": ("200|204", "33"),
+}
+for assertion in assertions:
+    expected = expected_status_assertions.get(assertion.get("testname"))
+    patterns = assertion.find("collectionProp[@name='Asserion.test_strings']")
+    if (
+        expected is None
+        or patterns is None
+        or len(patterns) != 1
+        or patterns[0].text != expected[0]
+        or assertion.findtext("intProp[@name='Assertion.test_type']") != expected[1]
+    ):
+        sys.exit(f"Invalid HTTP status assertion: {assertion.get('testname')}.")
+
 header_managers = [
     element for element in elements if element.tag == "HeaderManager"
 ]
